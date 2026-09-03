@@ -1,0 +1,101 @@
+{
+  "source": "Parimatch Cricket Live Feed",
+  "sport": "cricket",
+  "last_updated": "2026-08-30T09:58:19.983107+00:00",
+  "iteration": 140,
+  "interval_seconds": 5.0,
+  "total_matches": 12,
+  "live_matches": 8,
+  "upcoming_matches": 4,
+  "matches": [
+    {
+      "id": "pm_cricket_amsterdam_flames_vs_belfast_wolves",
+      "sport": "Cricket",
+      "tournament": "Cricket",
+      "country": "International",
+      "match": "Amsterdam Flames vs Belfast Wolves",
+      "teams": {
+        "team1": "Amsterdam Flames",
+        "team2": "Belfast Wolves"
+      },
+      "stage": "live",
+      "status": "in_play",
+      "state_info": "Central Zone total runs. Innings #1.Over #63",
+      "score": {
+        "team1_score": "177/7(46.5)",
+        "team2_score": "0/0"
+      },
+      "url": "https://parimatch-asia.net/en/sports/cricket/live",
+      "odds": {
+        "match_winner": {
+          "team1_odds": 2.21,
+          "team2_odds": 1.66,
+          "draw_odds": null
+        },
+        "toss_winner": {
+          "team1_odds": 1.01,
+          "team2_odds": 11.57
+        },
+        "additional_markets": [
+          {
+            "selection": "OVER 1.5",
+            "odds": 1.84
+          },
+          {
+            "selection": "UNDER 1.5",
+            "odds": 1.84
+          },
+          {
+            "selection": "OVER 3.5",
+            "odds": 2.09
+          },
+          {
+            "selection": "UNDER 3.5",
+            "odds": 1.67
+          },
+          {
+            "selection": "OVER 12.5",
+            "odds": 1.88
+          },
+            {
+            "selection": "UNDER 12.5",
+            "odds": 1.8
+          }
+        ]
+      }
+    },
+    {
+      "id": "3fd307a39dec47288e1841b6081d3709",
+      "sport": "Cricket",
+      "tournament": "Cricket",
+      "country": "International",
+      "match": "Edinburgh Castle Rockers vs Dublin Guardians",
+      "teams": {
+        "team1": "Edinburgh Castle Rockers",
+        "team2": "Dublin Guardians"
+      },
+      "stage": "live",
+      "status": "in_play",
+      "state_info": "Total runs. Innings #1.Over #1",
+      "score": null,
+      "url": "https://parimatch-asia.net",
+      "odds": {
+        "match_winner": {
+          "team1_odds": 1.71,
+          "team2_odds": 2.06,
+          "draw_odds": null
+        },
+        "additional_markets": [
+          {
+            "selection": "OVER 6.5",
+            "odds": 2.0
+          },
+          {
+            "selection": "UNDER 6.5",
+            "odds": 1.76
+          }
+        ]
+      }
+    }
+  ]
+}
