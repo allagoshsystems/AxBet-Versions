@@ -36,7 +36,8 @@ class DataRepository(private val context: Context) {
                     stage = match.stage,
                     odds1 = if (isOddsHidden) null else match.odds?.match_winner?.team1_odds,
                     odds2 = if (isOddsHidden) null else match.odds?.match_winner?.team2_odds,
-                    additionalMarkets = if (isOddsHidden) emptyList() else match.odds?.additional_markets ?: emptyList()
+                    additionalMarkets = if (isOddsHidden) emptyList() else match.odds?.additional_markets ?: emptyList(),
+                    recentBalls = match.recent_balls ?: emptyList()
                 )
             } ?: emptyList()
             trySend(uiMatches)
