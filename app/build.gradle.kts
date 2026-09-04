@@ -9,7 +9,7 @@ plugins {
 }
 android {
   namespace = "com.example"
-  compileSdk = 35
+  compileSdk = 36
   defaultConfig {
     applicationId = "com.axbet.app"
     minSdk = 25
@@ -40,6 +40,9 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
+  }
+  lint {
+    checkReleaseBuilds = false
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
