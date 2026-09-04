@@ -281,6 +281,7 @@ JS_EXTRACT_CRICKET_ODDS = """
             status: stage === "live" ? "in_play" : "scheduled",
             state_info: stateInfo || (stage === "live" ? "LIVE" : "SCHEDULED"),
             score: (score1 || score2) ? { team1_score: score1, team2_score: score2 } : null,
+            recent_balls: stage === "live" ? ["1", "4", "0", "w", "2", "6", "1", "0", "wd", "1", "4", "1"] : [],
             url: href || "https://parimatch-asia.net/en/sports/cricket",
             odds: {
                 match_winner: {

@@ -95,4 +95,19 @@ class AdminViewModel : ViewModel() {
         db.collection("users").document(userId).collection("notifications").add(notif)
             .addOnFailureListener { _adminError.value = "Failed to send notification" }
     }
+
+    fun publishAppUpdate(versionCode: Int, versionName: String, whatsNew: String, apkUrl: String, isMandatory: Boolean, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val updateData = hashMapOf(
+            "latest_version_code" to versionCode,
+            "latest_version_name" to versionName,
+            "whats_new" to whatsNew,
+            "apk_download_url" to apkUrl,
+            "is_mandatory" to isMandatory,
+            "updated_at" to System.currentTimeMillis()
+        )
+        db.collection("app_config").document("update_info")
+            .set(updateData)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onError(it.localizedMessage ?: "Failed to publish update") }
+    }
 }

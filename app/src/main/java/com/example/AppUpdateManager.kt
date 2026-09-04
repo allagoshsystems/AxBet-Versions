@@ -113,6 +113,18 @@ class AppUpdateManager(private val context: Context) {
         val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
         if (!file.exists()) return
 
+        // On Android 8.0 (Oreo) and above, check if the app has permission to install unknown apps
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!context.packageManager.canRequestPackageInstalls()) {
+                val settingsIntent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(settingsIntent)
+                return
+            }
+        }
+
         val uri = FileProvider.getUriForFile(
             context,
             "${context.applicationContext.packageName}.fileprovider",

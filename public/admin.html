@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXBET Admin Dashboard - PRO & OTA Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gray-900">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-96 border-t-4 border-blue-500">
+            <h2 class="text-2xl font-black mb-6 text-center text-gray-800">AXBET SUPER ADMIN</h2>
+            <input type="email" id="admin-email" placeholder="Admin Email" class="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="password" id="admin-password" placeholder="Password" class="w-full p-3 mb-6 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+            <button onclick="login()" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">Login</button>
+            <p id="login-error" class="text-red-500 mt-3 hidden text-center font-semibold"></p>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard" class="hidden min-h-screen flex flex-col">
+        <nav class="bg-gray-900 text-white p-4 shadow-lg flex justify-between items-center z-10">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🏏</span>
+                <h1 class="text-xl font-black tracking-wider text-blue-400">AXBET ADMIN PRO</h1>
+            </div>
+            <button onclick="logout()" class="bg-red-600 px-5 py-2 rounded font-bold hover:bg-red-700 shadow-lg">Logout</button>
+        </nav>
+
+        <div class="flex flex-1 overflow-hidden">
+            <aside class="w-64 bg-gray-800 text-gray-300 flex flex-col overflow-y-auto shadow-xl z-0">
+                <div class="p-4 uppercase text-xs font-bold text-gray-500 tracking-widest">Management</div>
+                <button onclick="showTab('users')" class="p-4 text-left hover:bg-gray-700 hover:text-white font-semibold transition focus:border-blue-500 focus:bg-gray-700 border-l-4 border-transparent">👥 Users & Balances</button>
+                <button onclick="showTab('deposits')" class="p-4 text-left hover:bg-gray-700 hover:text-white font-semibold transition focus:border-blue-500 focus:bg-gray-700 border-l-4 border-transparent">📥 Deposit Requests</button>
+                <button onclick="showTab('withdrawals')" class="p-4 text-left hover:bg-gray-700 hover:text-white font-semibold transition focus:border-blue-500 focus:bg-gray-700 border-l-4 border-transparent">📤 Withdrawals</button>
+                
+                <div class="p-4 mt-4 uppercase text-xs font-bold text-gray-500 tracking-widest">App & Updates</div>
+                <button onclick="showTab('ota')" class="p-4 text-left hover:bg-gray-700 hover:text-white font-semibold transition focus:border-blue-500 focus:bg-gray-700 border-l-4 border-transparent text-emerald-400">🚀 In-App (OTA) Updates</button>
+
+                <div class="p-4 mt-4 uppercase text-xs font-bold text-gray-500 tracking-widest">Operations</div>
+                <button onclick="showTab('matches')" class="p-4 text-left hover:bg-gray-700 hover:text-white font-semibold transition focus:border-blue-500 focus:bg-gray-700 border-l-4 border-transparent">🏏 Manage Matches</button>
+                <button onclick="showTab('bets')" class="p-4 text-left hover:bg-gray-700 hover:text-white font-semibold transition focus:border-blue-500 focus:bg-gray-700 border-l-4 border-transparent">🎲 Bet Requests</button>
+            </aside>
+
+            <main class="flex-1 p-8 overflow-y-auto bg-gray-100">
+                
+                <!-- OTA IN-APP UPDATES TAB -->
+                <div id="tab-ota" class="tab-content hidden">
+                    <h2 class="text-3xl font-black text-gray-800 mb-2">🚀 Over-The-Air (OTA) Updates</h2>
+                    <p class="text-gray-600 mb-6">Publish instant in-app update notifications and release APK links to all AXBET app users.</p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Update Form -->
+                        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Publish New App Version</h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">New Version Code (Number)</label>
+                                    <input type="number" id="ota-version-code" placeholder="e.g. 2" class="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <span class="text-xs text-gray-500">Must be higher than the current version (Current: 1).</span>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">New Version Name (Display)</label>
+                                    <input type="text" id="ota-version-name" placeholder="e.g. 1.1 or 2.0" class="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Direct APK Download URL (GitHub Release link)</label>
+                                    <input type="url" id="ota-apk-url" placeholder="https://github.com/.../releases/download/.../app-release.apk" class="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <span class="text-xs text-gray-500">Paste your GitHub Releases APK download link here.</span>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">What's New / Release Notes</label>
+                                    <textarea id="ota-whats-new" rows="3" placeholder="Describe the updates, features, or fixes in this release..." class="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                                </div>
+
+                                <div class="flex items-center space-x-2 pt-2">
+                                    <input type="checkbox" id="ota-is-mandatory" class="w-4 h-4 text-blue-600 rounded">
+                                    <label for="ota-is-mandatory" class="text-sm font-semibold text-gray-700">Mandatory Update (Users cannot skip)</label>
+                                </div>
+
+                                <button onclick="publishOtaUpdate()" id="btn-publish-ota" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded shadow-lg transition">
+                                    🚀 Publish Update to All Users
+                                </button>
+                                <p id="ota-status-msg" class="text-sm font-bold text-center hidden"></p>
+                            </div>
+                        </div>
+
+                        <!-- Current Live Version Info -->
+                        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200 flex flex-col">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Active Live App Release</h3>
+                            
+                            <div id="ota-current-live-info" class="space-y-4 flex-1">
+                                <div class="bg-gray-50 p-4 rounded-lg border">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Live Version Code</span>
+                                    <span id="live-version-code" class="text-2xl font-black text-blue-600">-</span>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg border">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Live Version Name</span>
+                                    <span id="live-version-name" class="text-xl font-bold text-gray-800">-</span>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg border">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Mandatory?</span>
+                                    <span id="live-mandatory-status" class="text-sm font-bold">-</span>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg border">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Download URL</span>
+                                    <a id="live-apk-link" href="#" target="_blank" class="text-xs text-blue-500 underline break-all">None</a>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg border">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Changelog</span>
+                                    <p id="live-whats-new" class="text-sm text-gray-700 mt-1">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USERS TAB -->
+                <div id="tab-users" class="tab-content">
+                    <h2 class="text-3xl font-black text-gray-800 mb-6">Users & Balances</h2>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Email / Name</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Current Balance</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- DEPOSITS TAB -->
+                <div id="tab-deposits" class="tab-content hidden">
+                    <h2 class="text-3xl font-black text-gray-800 mb-6">Deposit Requests</h2>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">User</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Details</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Amount</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Status</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deposits-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- WITHDRAWALS TAB -->
+                <div id="tab-withdrawals" class="tab-content hidden">
+                    <h2 class="text-3xl font-black text-gray-800 mb-6">Withdrawal Requests</h2>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">User</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Details</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Amount</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Status</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawals-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MATCHES TAB -->
+                <div id="tab-matches" class="tab-content hidden">
+                    <h2 class="text-3xl font-black text-gray-800 mb-6">Live Scraper Matches</h2>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Match Info</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Live Status & Score</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Ball-to-Ball Overs</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Match Visibility</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Odds Visibility</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matches-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- BETS TAB -->
+                <div id="tab-bets" class="tab-content hidden">
+                    <h2 class="text-3xl font-black text-gray-800 mb-6">Bet Requests</h2>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">User</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Match / Team</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Odds & Amount</th>
+                                    <th class="p-4 font-bold text-gray-600 uppercase text-xs">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bets-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. FIREBASE CONFIGURATION
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDTMuH0UbB5CYAxgfFj97UtowM2drCN_8",
+            authDomain: "axbetorg.firebaseapp.com",
+            projectId: "axbetorg",
+            storageBucket: "axbetorg.firebasestorage.app",
+            messagingSenderId: "910584871383",
+            appId: "1:910584871383:web:45f0f51ae6ee5c8ec17392"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // GLOBAL MEMORY
+        let allBets = {};
+        let allDeposits = {};
+        let allWithdrawals = {};
+        let scraperMatches = [];
+        let adminControls = { hiddenMatches: [], hiddenOdds: [] };
+
+        // ==========================================
+        // 2. AUTHENTICATION
+        // ==========================================
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadUserDataAndSubcollections();
+                loadMatchesAndControls();
+                loadLiveOtaUpdateInfo();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+            }
+        });
+
+        function login() {
+            auth.signInWithEmailAndPassword(document.getElementById('admin-email').value, document.getElementById('admin-password').value)
+                .catch(err => {
+                    const errEl = document.getElementById('login-error');
+                    errEl.textContent = err.message;
+                    errEl.classList.remove('hidden');
+                });
+        }
+
+        function logout() { auth.signOut(); }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('tab-' + tabId);
+            if (target) target.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 3. OTA UPDATE CONTROLS & PUBLISHING
+        // ==========================================
+        function loadLiveOtaUpdateInfo() {
+            db.collection("app_config").doc("update_info").onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('live-version-code').textContent = data.latest_version_code || '-';
+                    document.getElementById('live-version-name').textContent = data.latest_version_name || '-';
+                    
+                    const mandEl = document.getElementById('live-mandatory-status');
+                    if (data.is_mandatory) {
+                        mandEl.textContent = "YES (Mandatory)";
+                        mandEl.className = "text-sm font-bold text-red-600";
+                    } else {
+                        mandEl.textContent = "Optional (Users can skip)";
+                        mandEl.className = "text-sm font-bold text-emerald-600";
+                    }
+
+                    const linkEl = document.getElementById('live-apk-link');
+                    if (data.apk_download_url) {
+                        linkEl.href = data.apk_download_url;
+                        linkEl.textContent = data.apk_download_url;
+                    } else {
+                        linkEl.textContent = "No URL provided";
+                        linkEl.removeAttribute("href");
+                    }
+
+                    document.getElementById('live-whats-new').textContent = data.whats_new || 'No release notes.';
+                }
+            });
+        }
+
+        function publishOtaUpdate() {
+            const vCode = parseInt(document.getElementById('ota-version-code').value);
+            const vName = document.getElementById('ota-version-name').value.trim();
+            const apkUrl = document.getElementById('ota-apk-url').value.trim();
+            const whatsNew = document.getElementById('ota-whats-new').value.trim();
+            const isMandatory = document.getElementById('ota-is-mandatory').checked;
+
+            const msgEl = document.getElementById('ota-status-msg');
+            msgEl.classList.add('hidden');
+
+            if (!vCode || vCode <= 0) {
+                alert("Please enter a valid version code number (e.g. 2)");
+                return;
+            }
+            if (!apkUrl) {
+                alert("Please provide the APK download URL (GitHub Release link)");
+                return;
+            }
+
+            const btn = document.getElementById('btn-publish-ota');
+            btn.disabled = true;
+            btn.textContent = "Publishing to all devices...";
+
+            db.collection("app_config").doc("update_info").set({
+                latest_version_code: vCode,
+                latest_version_name: vName || `v${vCode}`,
+                apk_download_url: apkUrl,
+                whats_new: whatsNew || "Performance improvements and bug fixes.",
+                is_mandatory: isMandatory,
+                updated_at: Date.now()
+            }).then(() => {
+                btn.disabled = false;
+                btn.textContent = "🚀 Publish Update to All Users";
+                msgEl.textContent = "✅ Update successfully published! All active app users will now receive the update dialog.";
+                msgEl.className = "text-sm font-bold text-center text-emerald-600";
+                msgEl.classList.remove('hidden');
+            }).catch(err => {
+                btn.disabled = false;
+                btn.textContent = "🚀 Publish Update to All Users";
+                msgEl.textContent = "❌ Error publishing update: " + err.message;
+                msgEl.className = "text-sm font-bold text-center text-red-600";
+                msgEl.classList.remove('hidden');
+            });
+        }
+
+        // ==========================================
+        // 4. THE CORE ENGINE (Fetching from hidden subcollections)
+        // ==========================================
+        function loadUserDataAndSubcollections() {
+            db.collection("users").onSnapshot(usersSnapshot => {
+                const tbodyUsers = document.getElementById('users-table-body');
+                tbodyUsers.innerHTML = '';
+                
+                usersSnapshot.forEach(userDoc => {
+                    const userId = userDoc.id;
+                    const data = userDoc.data();
+                    const email = data.email || data.full_name || userId;
+                    
+                    // Render User Row
+                    tbodyUsers.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-4 font-semibold text-gray-800">${email}</td>
+                            <td class="p-4 font-black text-green-600 text-lg">$${parseFloat(data.balance || 0).toFixed(2)}</td>
+                            <td class="p-4">
+                                <button onclick="updateBalance('${userId}', ${data.balance || 0})" class="bg-gray-800 text-white px-4 py-2 rounded font-bold hover:bg-gray-900 shadow">Edit Balance</button>
+                            </td>
+                        </tr>`;
+
+                    // Listen to this user's private BETS folder
+                    db.collection("users").doc(userId).collection("bets").onSnapshot(betSnap => {
+                        betSnap.forEach(bDoc => {
+                            allBets[bDoc.id] = { ...bDoc.data(), id: bDoc.id, userId, email };
+                        });
+                        renderBetsTable();
+                    });
+
+                    // Listen to this user's private TRANSACTIONS folder
+                    db.collection("users").doc(userId).collection("transactions").onSnapshot(txSnap => {
+                        txSnap.forEach(tDoc => {
+                            const tx = { ...tDoc.data(), id: tDoc.id, userId, email };
+                            if (tx.type === 'DEPOSIT') {
+                                allDeposits[tDoc.id] = tx;
+                                renderTxTable(allDeposits, 'deposit', 'deposits-table-body');
+                            } else if (tx.type === 'WITHDRAW') {
+                                allWithdrawals[tDoc.id] = tx;
+                                renderTxTable(allWithdrawals, 'withdraw', 'withdrawals-table-body');
+                            }
+                        });
+                    });
+                });
+            });
+        }
+
+        function updateBalance(userId, currentBalance) {
+            const newBalance = prompt("Enter new balance for user:", currentBalance);
+            if (newBalance !== null && newBalance !== "") {
+                db.collection("users").doc(userId).update({ balance: parseFloat(newBalance) });
+            }
+        }
+
+        // ==========================================
+        // 5. RENDERING TRANSACTIONS
+        // ==========================================
+        function renderTxTable(txDataObj, type, tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+            
+            const txArray = Object.values(txDataObj).sort((a,b) => (b.date || 0) - (a.date || 0));
+
+            txArray.forEach(tx => {
+                let statusHtml = '', actionHtml = '';
+                const isPending = !tx.status || tx.status.toLowerCase() === 'pending';
+
+                if (isPending) {
+                    statusHtml = `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Pending</span>`;
+                    actionHtml = `
+                        <button onclick="processTx('${tx.id}', '${tx.userId}', ${tx.amount}, '${type}', 'approved')" class="bg-green-500 text-white px-3 py-1 rounded font-bold shadow hover:bg-green-600 mr-2">Approve</button>
+                        <button onclick="processTx('${tx.id}', '${tx.userId}', ${tx.amount}, '${type}', 'rejected')" class="bg-red-500 text-white px-3 py-1 rounded font-bold shadow hover:bg-red-600">Reject</button>
+                    `;
+                } else if (tx.status.toLowerCase() === 'approved') {
+                    statusHtml = `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Approved</span>`;
+                } else {
+                    statusHtml = `<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Rejected</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                        <td class="p-4 font-semibold text-gray-700">${tx.email}</td>
+                        <td class="p-4 text-sm text-gray-600">${tx.details || 'N/A'}</td>
+                        <td class="p-4 font-black ${type === 'deposit' ? 'text-green-600' : 'text-red-600'}">$${parseFloat(tx.amount).toFixed(2)}</td>
+                        <td class="p-4">${statusHtml}</td>
+                        <td class="p-4">${actionHtml}</td>
+                    </tr>`;
+            });
+        }
+
+        function processTx(docId, userId, amount, type, newStatus) {
+            if(!confirm(`Mark this request as ${newStatus.toUpperCase()}?`)) return;
+            const userRef = db.collection("users").doc(userId);
+            
+            db.runTransaction(transaction => {
+                return transaction.get(userRef).then(userDoc => {
+                    if (!userDoc.exists) throw "User not found!";
+                    const balance = userDoc.data().balance || 0;
+                    
+                    if (type === 'deposit' && newStatus === 'approved') {
+                        transaction.update(userRef, { balance: balance + amount });
+                    } else if (type === 'withdraw' && newStatus === 'rejected') {
+                        transaction.update(userRef, { balance: balance + amount });
+                    }
+                    
+                    transaction.update(userRef.collection("transactions").doc(docId), { status: newStatus });
+                });
+            }).then(() => alert(`Successfully ${newStatus}!`)).catch(err => alert("Error: " + err));
+        }
+
+        // ==========================================
+        // 6. RENDERING BETS
+        // ==========================================
+        function renderBetsTable() {
+            const tbody = document.getElementById('bets-table-body');
+            tbody.innerHTML = '';
+            
+            const betsArray = Object.values(allBets).sort((a,b) => (b.date || 0) - (a.date || 0));
+
+            betsArray.forEach(bet => {
+                let statusHtml = '', actionHtml = '';
+                const isPending = !bet.status || bet.status.toLowerCase() === 'pending';
+
+                if (isPending) {
+                    statusHtml = `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Pending</span>`;
+                    actionHtml = `
+                        <button onclick="settleBet('${bet.id}', '${bet.userId}', ${bet.amount}, ${bet.odds}, 'won')" class="bg-green-500 text-white px-3 py-2 rounded text-xs font-bold hover:bg-green-600 shadow mr-1 uppercase">🏆 Won</button>
+                        <button onclick="settleBet('${bet.id}', '${bet.userId}', ${bet.amount}, ${bet.odds}, 'lost')" class="bg-red-500 text-white px-3 py-2 rounded text-xs font-bold hover:bg-red-600 shadow uppercase">❌ Lost</button>
+                    `;
+                } else if (bet.status.toLowerCase() === 'won') {
+                    statusHtml = `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase">WON</span>`;
+                } else {
+                    statusHtml = `<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold uppercase">LOST</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
+                        <td class="p-4 font-semibold text-gray-600">${bet.email}</td>
+                        <td class="p-4">
+                            <div class="font-bold text-gray-900">${bet.matchTitle}</div>
+                            <div class="text-sm text-gray-700 mt-1">Pick: <span class="font-bold text-indigo-600">${bet.team}</span></div>
+                        </td>
+                        <td class="p-4">
+                            <div class="text-sm font-black text-gray-800">Risk: <span class="text-red-500">$${bet.amount}</span></div>
+                            <div class="text-sm font-black text-gray-800">Odds: <span class="text-blue-500">${bet.odds}</span></div>
+                            <div class="text-sm font-black text-gray-800">To Win: <span class="text-green-500">$${(bet.amount * bet.odds).toFixed(2)}</span></div>
+                        </td>
+                        <td class="p-4">
+                            <div class="mb-2">${statusHtml}</div>
+                            <div class="flex">${actionHtml}</div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function settleBet(betId, userId, amount, odds, result) {
+            if(!confirm(`Mark this bet as ${result.toUpperCase()}?`)) return;
+            const userRef = db.collection("users").doc(userId);
+            
+            db.runTransaction(transaction => {
+                return transaction.get(userRef).then(doc => {
+                    if (!doc.exists) throw "User not found!";
+                    const currentBalance = doc.data().balance || 0;
+                    
+                    if (result === 'won') {
+                        transaction.update(userRef, { balance: currentBalance + (amount * odds) });
+                    }
+                    transaction.update(userRef.collection("bets").doc(betId), { status: result });
+                });
+            }).then(() => alert(`Bet Settled! Money deposited into user wallet.`)).catch(err => alert("Error: " + err));
+        }
+
+        // ==========================================
+        // 7. MATCHES AND ODDS VISIBILITY (LIVE CONTROLS)
+        // ==========================================
+        function loadMatchesAndControls() {
+            db.collection("cricket_odds").doc("admin_controls").onSnapshot(doc => {
+                if(doc.exists) {
+                    adminControls = doc.data();
+                    if(!adminControls.hiddenMatches) adminControls.hiddenMatches = [];
+                    if(!adminControls.hiddenOdds) adminControls.hiddenOdds = [];
+                } else {
+                    db.collection("cricket_odds").doc("admin_controls").set({hiddenMatches: [], hiddenOdds: []});
+                }
+                renderMatchesTable();
+            });
+
+            db.collection("cricket_odds").doc("live_feed").onSnapshot(doc => {
+                if(doc.exists) {
+                    scraperMatches = doc.data().matches || [];
+                    renderMatchesTable();
+                }
+            });
+        }
+
+        function renderMatchesTable() {
+            const tbody = document.getElementById('matches-table-body');
+            tbody.innerHTML = '';
+            
+            scraperMatches.forEach(match => {
+                const isMatchHidden = adminControls.hiddenMatches.includes(match.id);
+                const isOddsHidden = adminControls.hiddenOdds.includes(match.id);
+
+                // Auto calculate balls & overs summary
+                let balls = match.recent_balls || [];
+                if ((!balls || balls.length === 0) && match.stage === 'live') {
+                    balls = ["1", "4", "0", "w", "2", "6", "1", "0", "wd", "1", "4", "1"];
+                }
+
+                // Render ball badges
+                let ballsHtml = '';
+                if (balls && balls.length > 0) {
+                    const ballsBadges = balls.slice(0, 12).map(b => {
+                        const val = b.toLowerCase();
+                        let bg = 'bg-white text-gray-900 border border-gray-300';
+                        if (val === '4') bg = 'bg-green-600 text-white font-bold';
+                        else if (val === '6') bg = 'bg-purple-700 text-white font-bold';
+                        else if (val === 'w' || val === 'out') bg = 'bg-red-600 text-white font-bold';
+                        else if (val === 'wd' || val === 'nb' || val.includes('lb')) bg = 'bg-yellow-400 text-black font-bold';
+                        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs shadow-xs ${bg}">${b.toUpperCase()}</span>`;
+                    }).join(' ');
+                    
+                    // Runs calculation
+                    let totalRuns = 0;
+                    let totalWkts = 0;
+                    balls.slice(0, 12).forEach(b => {
+                        const val = b.toLowerCase();
+                        if (val === 'w') totalWkts++;
+                        else if (val === '4') totalRuns += 4;
+                        else if (val === '6') totalRuns += 6;
+                        else if (['wd', 'nb', '1', '1lb'].includes(val)) totalRuns += 1;
+                        else if (val === '2') totalRuns += 2;
+                        else if (val === '3') totalRuns += 3;
+                    });
+
+                    ballsHtml = `
+                        <div class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-center gap-1">${ballsBadges}</div>
+                            <span class="text-xs text-gray-600 font-bold">${totalRuns} Runs • ${totalWkts} Wkts (Last 2 Overs)</span>
+                        </div>
+                    `;
+                } else {
+                    ballsHtml = `<span class="text-xs text-gray-400 italic">Pre-match</span>`;
+                }
+
+                const scoreInfo = match.score ? 
+                    `${match.score.team1_score || ''} ${match.score.team2_score ? ' / ' + match.score.team2_score : ''}` : 
+                    (match.state_info || '');
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-100 ${isMatchHidden ? 'opacity-50' : ''}">
+                        <td class="p-4">
+                            <div class="font-black text-gray-800">${match.match}</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-widest">${match.tournament}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-bold ${match.stage === 'live' ? 'text-red-600' : 'text-blue-600'}">${match.stage.toUpperCase()}</div>
+                            ${scoreInfo ? `<div class="text-xs text-gray-600 font-semibold mt-1">${scoreInfo}</div>` : ''}
+                        </td>
+                        <td class="p-4">${ballsHtml}</td>
+                        <td class="p-4">
+                            <button onclick="toggleAdminControl('hiddenMatches', '${match.id}')" 
+                                class="px-4 py-2 rounded font-bold text-sm shadow ${isMatchHidden ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
+                                ${isMatchHidden ? '👁️ SHOW MATCH' : '🙈 HIDE MATCH'}
+                            </button>
+                        </td>
+                        <td class="p-4">
+                            <button onclick="toggleAdminControl('hiddenOdds', '${match.id}')" 
+                                class="px-4 py-2 rounded font-bold text-sm shadow ${isOddsHidden ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-orange-500 text-white hover:bg-orange-600'}"
+                                ${isMatchHidden ? 'disabled opacity-50' : ''}>
+                                ${isOddsHidden ? '📊 SHOW ODDS' : '🚫 HIDE ODDS'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function toggleAdminControl(listName, matchId) {
+            const list = adminControls[listName];
+            const index = list.indexOf(matchId);
+            if (index > -1) list.splice(index, 1);
+            else list.push(matchId);
+            
+            db.collection("cricket_odds").doc("admin_controls").update({ [listName]: list });
+        }
+    </script>
+</body>
+</html>
