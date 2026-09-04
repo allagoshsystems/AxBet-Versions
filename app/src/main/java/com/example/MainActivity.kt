@@ -31,18 +31,21 @@ class MainActivity : ComponentActivity() {
     authViewModel = AuthViewModel()
     updateManager = AppUpdateManager(this)
     
-    val permissionsToRequest = mutableListOf<String>()
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+            }
         }
-    }
-    
-    if (permissionsToRequest.isNotEmpty()) {
-        requestPermissionLauncher.launch(permissionsToRequest.toTypedArray())
+    } catch (e: Exception) {
+        // Safe fallback for custom ROMs / Android forks where notification permission checks fail
     }
 
-    enableEdgeToEdge()
+    try {
+        enableEdgeToEdge()
+    } catch (e: Exception) {
+        // Fallback for older OEM system UI bugs
+    }
     setContent {
       MyApplicationTheme {
         AppNavigation(
