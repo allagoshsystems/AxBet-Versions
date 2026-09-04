@@ -128,7 +128,8 @@ fun OtaUpdateAdminPanel(adminViewModel: AdminViewModel) {
         OutlinedTextField(
             value = versionCodeText,
             onValueChange = { versionCodeText = it },
-            label = { Text("New Version Code (e.g. 2)") },
+            label = { Text("New Version Code (Current: 2)") },
+            placeholder = { Text("2") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -137,7 +138,8 @@ fun OtaUpdateAdminPanel(adminViewModel: AdminViewModel) {
         OutlinedTextField(
             value = versionNameText,
             onValueChange = { versionNameText = it },
-            label = { Text("New Version Name (e.g. 1.1)") },
+            label = { Text("New Version Name (Current: 2.0)") },
+            placeholder = { Text("2.0") },
             modifier = Modifier.fillMaxWidth()
         )
 
