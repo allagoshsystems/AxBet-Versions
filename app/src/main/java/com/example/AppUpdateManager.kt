@@ -17,23 +17,43 @@ import java.io.File
 
 data class AppUpdateInfo(
     val latestVersionCode: Int = 0,
+    val latestVersionName: String = "",
     val whatsNew: String = "",
     val downloadUrl: String = "",
     val isMandatory: Boolean = false,
-    val currentVersionCode: Int = 1
+    val currentVersionCode: Int = BuildConfig.VERSION_CODE,
+    val currentVersionName: String = BuildConfig.VERSION_NAME
 )
 
 class AppUpdateManager(private val context: Context) {
     private val db = FirebaseFirestore.getInstance()
 
-    fun checkForUpdates(): Flow<AppUpdateInfo?> = callbackFlow {
-        // Read current version code
-        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        val currentVersionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            packageInfo.longVersionCode.toInt()
-        } else {
-            packageInfo.versionCode
+    fun getInstalledVersionCode(): Int {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode.toInt()
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode
+            }
+        } catch (e: Exception) {
+            BuildConfig.VERSION_CODE
         }
+    }
+
+    fun getInstalledVersionName(): String {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionName ?: BuildConfig.VERSION_NAME
+        } catch (e: Exception) {
+            BuildConfig.VERSION_NAME
+        }
+    }
+
+    fun checkForUpdates(): Flow<AppUpdateInfo?> = callbackFlow {
+        val currentVersionCode = getInstalledVersionCode()
+        val currentVersionName = getInstalledVersionName()
 
         val listener = db.collection("app_config").document("update_info")
             .addSnapshotListener { snapshot, error ->
@@ -50,21 +70,26 @@ class AppUpdateManager(private val context: Context) {
                             is String -> latestVersionCodeObj.toIntOrNull() ?: 0
                             else -> 0
                         }
+                        val latestVersionName = snapshot.getString("latest_version_name") ?: "v$latestVersionCode"
                         val whatsNew = snapshot.getString("whats_new") ?: ""
                         val downloadUrl = snapshot.getString("apk_download_url") ?: ""
                         val isMandatory = snapshot.getBoolean("is_mandatory") ?: false
 
-                        if (latestVersionCode > currentVersionCode && downloadUrl.isNotEmpty()) {
+                        // STRICT CHECK: Only prompt for update if Firebase version code is STRICTLY GREATER than installed version code
+                        if (latestVersionCode > currentVersionCode && downloadUrl.isNotBlank()) {
                             trySend(
                                 AppUpdateInfo(
                                     latestVersionCode = latestVersionCode,
+                                    latestVersionName = latestVersionName,
                                     whatsNew = whatsNew,
                                     downloadUrl = downloadUrl,
                                     isMandatory = isMandatory,
-                                    currentVersionCode = currentVersionCode
+                                    currentVersionCode = currentVersionCode,
+                                    currentVersionName = currentVersionName
                                 )
                             )
                         } else {
+                            // If installed version is equal to or greater than latest, or no new version, DO NOT PROMPT
                             trySend(null)
                         }
                     } catch (e: Exception) {

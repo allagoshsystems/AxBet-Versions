@@ -36,16 +36,6 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES)
-        }
-    } else {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        }
     }
     
     if (permissionsToRequest.isNotEmpty()) {
@@ -55,22 +45,11 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
     setContent {
       MyApplicationTheme {
-        val updateInfo by updateManager.checkForUpdates().collectAsState(initial = null)
-        var skipUpdate by remember { mutableStateOf(false) }
-        
-        if (updateInfo != null && !skipUpdate) {
-            UpdateScreen(
-                updateInfo = updateInfo!!,
-                onUpdateClicked = {
-                    updateManager.downloadAndInstallUpdate(updateInfo!!.downloadUrl) { progress ->
-                        // Progress handled by system notification
-                    }
-                },
-                onSkipClicked = { skipUpdate = true }
-            )
-        } else {
-            AppNavigation(repository = dataRepository, authViewModel = authViewModel)
-        }
+        AppNavigation(
+            repository = dataRepository,
+            authViewModel = authViewModel,
+            updateManager = updateManager
+        )
       }
     }
   }

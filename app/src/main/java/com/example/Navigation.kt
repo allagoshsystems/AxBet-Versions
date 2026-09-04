@@ -45,12 +45,28 @@ val bottomNavItems = listOf(
 )
 
 @Composable
-fun AppNavigation(repository: DataRepository, authViewModel: AuthViewModel) {
+fun AppNavigation(repository: DataRepository, authViewModel: AuthViewModel, updateManager: AppUpdateManager? = null) {
     var showSplash by remember { mutableStateOf(true) }
 
     if (showSplash) {
         SplashScreen(onSplashComplete = { showSplash = false })
         return
+    }
+
+    if (updateManager != null) {
+        val updateInfo by updateManager.checkForUpdates().collectAsState(initial = null)
+        var skipUpdate by remember { mutableStateOf(false) }
+
+        if (updateInfo != null && !skipUpdate) {
+            UpdateScreen(
+                updateInfo = updateInfo!!,
+                onUpdateClicked = {
+                    updateManager.downloadAndInstallUpdate(updateInfo!!.downloadUrl) { _ -> }
+                },
+                onSkipClicked = { skipUpdate = true }
+            )
+            return
+        }
     }
 
     val user by authViewModel.user.collectAsState()

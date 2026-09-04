@@ -62,7 +62,7 @@ fun UpdateScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Version ${updateInfo.latestVersionCode} is now available. You are currently on version ${updateInfo.currentVersionCode}.",
+                    text = "Version ${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode}) is now available.\nYou are currently on Version ${updateInfo.currentVersionName} (Build ${updateInfo.currentVersionCode}).",
                     color = Color.Gray,
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center

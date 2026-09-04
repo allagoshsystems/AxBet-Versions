@@ -1,9 +1,12 @@
-name: Build Android APK
+name: Build Updates APK (Debug)
 
 on:
   push:
     branches: [ "main", "master" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -26,11 +29,11 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Build Debug APK
+    - name: Build Debug APK for Updates
       run: gradle assembleDebug --no-daemon --stacktrace
       
-    - name: Upload APK
+    - name: Upload Debug Update APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AxBet-Cricket-APK
+        name: AxBet-Update-Debug-APK
         path: app/build/outputs/apk/debug/app-debug.apk

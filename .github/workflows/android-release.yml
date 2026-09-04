@@ -1,4 +1,4 @@
-name: Build Production (Release) APK
+name: Build Original Release APK
 
 on:
   push:
@@ -24,16 +24,26 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: Ensure Production Keystore Exists
+      run: |
+        if [ ! -f "release.keystore" ]; then
+          if [ -f "release.keystore.base64" ]; then
+            cat release.keystore.base64 | tr -d '\r\n ' | base64 -d > release.keystore
+          else
+            keytool -genkey -v -keystore release.keystore -storepass release123 -alias release -keypass release123 -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Production App"
+          fi
+        fi
+
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
     - name: Build Release APK
       run: gradle assembleRelease --no-daemon --stacktrace
       
-    - name: Upload Release APK Artifact
+    - name: Upload Original Release APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AxBet-Cricket-Production-APK
+        name: AxBet-Original-Release-APK
         path: app/build/outputs/apk/release/app-release.apk
 
     - name: Create or Update GitHub Release

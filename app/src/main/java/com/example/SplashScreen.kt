@@ -20,14 +20,13 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 fun isInternetAvailable(context: Context): Boolean {
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val network = connectivityManager.activeNetwork ?: return false
-    val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
-    return when {
-        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-        else -> false
+    return try {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return true
+        val network = connectivityManager.activeNetwork ?: return true
+        val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return true
+        activeNetwork.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    } catch (e: Exception) {
+        true
     }
 }
 
@@ -176,9 +175,28 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = if (percentage < 23) "Initializing systems..." else if (percentage < 70) "Loading secure connection..." else "Preparing dashboard...",
+                    text = if (percentage < 23) {
+                        "Initializing systems..."
+                    } else if (percentage in 23..45) {
+                        "Connecting to AXBET Cloud..."
+                    } else if (percentage in 46..75) {
+                        "Checking app version (v${BuildConfig.VERSION_NAME})..."
+                    } else if (percentage in 76..92) {
+                        "Loading match feeds & odds..."
+                    } else {
+                        "Preparing dashboard..."
+                    },
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
                 )
             }
         }
